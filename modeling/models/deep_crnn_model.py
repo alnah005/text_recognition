@@ -52,7 +52,7 @@ def deep_crnn(input_tensor, labels, input_shape, alphabet, batch_size,
     lstm_out = bidirectional_lstm(cnn_out, n_hidden)
     #else:
     #    lstm_out = bidirectional_lstm(cnn_out, n_hidden, 1.0)
-    prob = get_predictions(lstm_out, n_classes, n_hidden)
+    prob = get_predictions(lstm_out, n_classes+1, n_hidden)
 
     # loss layers
     out = ctc_loss(prob, labels, input_shape, alphabet, 

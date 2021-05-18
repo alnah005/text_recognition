@@ -16,8 +16,8 @@ def read_subjects_and_classifications(sv_fold):
 
     # Filter out records that haven't been classified or are in the wrong workflow
     subj = subj[subj.classifications_count > 0]
-    subj = subj[subj["subject_set_id"] == 15582]
-    subj = subj[subj["workflow_id"] == 5329]
+    # subj = subj[subj["subject_set_id"] == 15582]
+    subj = subj[subj["workflow_id"].isin([5329, 5339])]
     clas = clas[clas.subject_ids.isin(subj.subject_id)]
 
     # remove everything before 2018 january 23 (full launch)
