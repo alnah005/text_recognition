@@ -136,7 +136,11 @@ def get_transcription_lines(pts, maxh, alphabet):
 
 def preprocess_ASM_csv(print_letters=False):
     # Read in all classifications
-    sv_fold = os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/"
+    sv_fold = os.path.sep.join(__file__.split(os.path.sep)[:-1])
+    if len(sv_fold) > 0:
+       sv_fold += "/../data/ASM/"
+    else:
+       sv_fold = "./../data/ASM/"
     if not os.path.isdir(sv_fold+"Images"):
         os.mkdir(sv_fold+"Images")
 
