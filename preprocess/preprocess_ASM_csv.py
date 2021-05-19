@@ -58,7 +58,7 @@ def get_transcription_lines(pts, maxh, alphabet):
     # ignore all cross writing or weird lines 
     # i.e. everything where $\Delta x < \Delta$y
     good_lines = abs(data_mini["x1"]-data_mini["x2"]) > abs(data_mini["y1"]-data_mini["y2"])
-    data_mini = data_mini[good_lines]
+    # data_mini = data_mini[good_lines]
     data_mini = data_mini.sort_values("y1")
 
     if len(data_mini) <= 0:
@@ -95,11 +95,11 @@ def get_transcription_lines(pts, maxh, alphabet):
 
     # get the slope to use when whiting out the image during preprocessing
     def slope_top(curpts):
-        return (curpts["y4"]-curpts["y3"])/(curpts["x2"]-curpts["x1"])
+        return (curpts["y4"]-curpts["y3"])/(curpts["x2"]-curpts["x1"]+0.000001)
     def intercept_top(curpts):
         return curpts["y3"]-min(curpts["y4"],curpts["y3"])
     def slope_bottom(curpts):
-        return (curpts["y2"]-curpts["y1"])/(curpts["x2"]-curpts["x1"])
+        return (curpts["y2"]-curpts["y1"])/(curpts["x2"]-curpts["x1"]+0.000001)
     def intercept_bottom(curpts):
         return curpts["y1"]-min(curpts["y4"],curpts["y3"])
     data_mini["slope_top"] = data_mini.apply(slope_top, axis=1)
@@ -136,7 +136,7 @@ def get_transcription_lines(pts, maxh, alphabet):
 
 def preprocess_ASM_csv(print_letters=False):
     # Read in all classifications
-    sv_fold = "../data/ASM/"
+    sv_fold = os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/"
     if not os.path.isdir(sv_fold+"Images"):
         os.mkdir(sv_fold+"Images")
 
@@ -150,7 +150,7 @@ def preprocess_ASM_csv(print_letters=False):
     data = pd.DataFrame(columns=["subject_id", "classification_id", "workflow_id", "frame",
                                  "created_dt", "location", "transcription", "line_box",
                                  "y1", "j", "slope_top", "intercept_top", "slope_bottom",
-                                 "intercept_bottom"])
+                                 "intercept_bottom","boston_public_library","client_width_height","natural_width_height"])
 
     print("Processing", len(clas), "classifications...")
     # for displaying progress
@@ -159,11 +159,11 @@ def preprocess_ASM_csv(print_letters=False):
     tenpercent = onepercent*10
 
 
-    with open("../data/img_size.txt", "r") as f:
+    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/img_size.txt", "r") as f:
         doc = f.readline()
         w, h = doc.split(",")
         maxh = int(float(h))
-    with open("../data/alphabet.txt", "r") as f:
+    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/alphabet.txt", "r") as f:
         alphabet = f.readline()
 
     for i in range(len(clas)):
@@ -188,25 +188,27 @@ def preprocess_ASM_csv(print_letters=False):
             data_mini["frame"] = [fr for i in d_loop]
             data_mini["created_dt"] = [clas1["created_dt"] for i in d_loop]
             data_mini["location"] = [subj1["locations_dict"].iloc[0][str(fr)] for i in d_loop]
-
+            data_mini["boston_public_library"] = [list(clas1['subject_data_dict'].values())[0]['#repository_id'] for i in d_loop] 
+            data_mini["client_width_height"] = [str(clas1['metadata_dict']['subject_dimensions'][fr]['clientWidth'])+"_"+str(clas1['metadata_dict']['subject_dimensions'][fr]['clientHeight']) for i in d_loop] 
+            data_mini["natural_width_height"] = [str(clas1['metadata_dict']['subject_dimensions'][fr]['naturalWidth'])+"_"+str(clas1['metadata_dict']['subject_dimensions'][fr]['naturalHeight']) for i in d_loop]
             data = data.append(data_mini)
         count += 1
         if count % onepercent == 0:
             if count % tenpercent == 0:
                 perc = count//onepercent
                 print(str(perc)+"%", end="", flush=True)
-                data.to_csv("../data/ASM/full_train.csv", sep="\t", index=False)
+                data.to_csv(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/full_train.csv", sep="\t", index=False)
             else:
                 print(".", end="", flush=True)
             
 
     # end of loop
     data.sort_values(["created_dt", "classification_id", "frame", "y1"])
-    data.to_csv("../data/ASM/full_train.csv", sep="\t", index=False)
+    data.to_csv(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/full_train.csv", sep="\t", index=False)
     print("\nCreated {0} data entries and saved file".format(len(data)))
 
     # create file for length of data
-    with open("../data/ASM/data_size.txt", "w") as f:
+    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/data_size.txt", "w") as f:
         f.write(str(len(data)))
     # create alphabet
     letters = set()
@@ -215,7 +217,7 @@ def preprocess_ASM_csv(print_letters=False):
             for l in list(tran):
                 letters.add(l)
     letters = "".join(sorted(letters))
-    with open("../data/ASM/alphabet.txt", "w") as f:
+    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/alphabet.txt", "w") as f:
         f.write(letters)
     print("\n")
     if print_letters:

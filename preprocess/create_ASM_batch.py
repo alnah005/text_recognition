@@ -16,26 +16,25 @@ def readImg(url, grey=True):
     img = img.convert("L")
     return img
 
+train_lines = []
+img_files = []
+count = 0
 # create a batch with the next group of data from ASM
-def create_ASM_batch(batch_end=1000, batch_size=1000, resize_to=0.5, 
-                     rand_batch=False):
+def create_ASM_batch(resize_to=0.5):
+    global train_lines
+    global img_files
+    global count
+    print(count)
     # Read in all classifications
     sv_fold = "../data/ASM/"
     if not os.path.isdir(sv_fold+"Images"):
         os.mkdir(sv_fold+"Images")
-    else:
-        for the_file in os.listdir(sv_fold+"Images"):
-            fpath = os.path.join(sv_fold+"Images", the_file)
-            try:
-                if os.path.isfile(fpath):
-                    os.unlink(fpath)
-            except:
-                pass
 
     full_sv = os.getcwd().replace("\\", "/")
     full_sv = full_sv.replace("/online_functions", "")
     full_sv = full_sv.replace("/modeling", "")
     full_sv = full_sv.replace("/results", "")
+    full_sv = full_sv.replace("/preprocess","")
     full_sv = full_sv + "/data/ASM/Images/"
 
     print("Loading classification data", flush=True)
@@ -52,21 +51,12 @@ def create_ASM_batch(batch_end=1000, batch_size=1000, resize_to=0.5,
         maxh = int(float(h))
         maxw = int(float(w))
 
-    # loop to get data
-    if not rand_batch:
-        curdata = data.iloc[(batch_end-batch_size):batch_end]
-    else:
-        curdata = data.iloc[:batch_end]
-        curdata = curdata.sample(batch_size) # get random subset
-    train_lines = []
-    img_files = []
-    count = 0
-    onepercent = len(curdata)//100
+    onepercent = len(data)//100
     tenpercent = onepercent*10
 
     print("Creating image files and training csv", flush=True)
-    for i in range(len(curdata)):
-        curclas = curdata.iloc[i].copy()
+    for i in range(count, len(data)):
+        curclas = data.iloc[i].copy()
         loc = curclas["location"]
         img = readImg(loc)
 
@@ -102,7 +92,6 @@ def create_ASM_batch(batch_end=1000, batch_size=1000, resize_to=0.5,
             ratio = maxw / float(img_line.size[0])
             hnew = int(float(img_line.size[1]) * float(ratio))
             img_line = img_line.resize((maxw, hnew), PIL.Image.ANTIALIAS)
-
         fn = "{0}{1}_{2}_{3}_{4}.png".format(full_sv, curclas["subject_id"], curclas["classification_id"],
                                              curclas["frame"], curclas["j"])
         # save image
@@ -128,22 +117,15 @@ def create_ASM_batch(batch_end=1000, batch_size=1000, resize_to=0.5,
 
 
 if __name__ == "__main__":
-    batch_end=1000
-    batch_size=1000
     resize_to=1.0
-    rand_batch=False
 
-    if len(sys.argv) >= 5:
-        batch_end=int(sys.argv[1])
-        batch_size=int(sys.argv[2])
-        resize_to=float(sys.argv[3])
-        rand_batch=sys.argv[4] == "True"
+    if len(sys.argv) >= 2:
+        resize_to=float(sys.argv[1])
 
     redo = True
     while redo:
         try:
-            create_ASM_batch(batch_end=batch_end, batch_size=batch_size, 
-                             resize_to=resize_to, rand_batch=rand_batch)
+            create_ASM_batch(resize_to=resize_to)
             redo = False
         except:
             print("Error during batch creation, redoing", flush=True)
