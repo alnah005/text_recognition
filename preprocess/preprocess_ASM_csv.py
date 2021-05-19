@@ -162,12 +162,16 @@ def preprocess_ASM_csv(print_letters=False):
     onepercent = len(clas)//100
     tenpercent = onepercent*10
 
-
-    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/img_size.txt", "r") as f:
+    root_path = os.path.sep.join(__file__.split(os.path.sep)[:-1])
+    if len(root_path) > 0:
+        root_path += '/'
+    else:
+        root_path = './'
+    with open(root_path+"../data/img_size.txt", "r") as f:
         doc = f.readline()
         w, h = doc.split(",")
         maxh = int(float(h))
-    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/alphabet.txt", "r") as f:
+    with open(root_path+"../data/alphabet.txt", "r") as f:
         alphabet = f.readline()
 
     for i in range(len(clas)):
@@ -201,18 +205,18 @@ def preprocess_ASM_csv(print_letters=False):
             if count % tenpercent == 0:
                 perc = count//onepercent
                 print(str(perc)+"%", end="", flush=True)
-                data.to_csv(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/full_train.csv", sep="\t", index=False)
+                data.to_csv(root_path+"/../data/ASM/full_train.csv", sep="\t", index=False)
             else:
                 print(".", end="", flush=True)
             
 
     # end of loop
     data.sort_values(["created_dt", "classification_id", "frame", "y1"])
-    data.to_csv(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/full_train.csv", sep="\t", index=False)
+    data.to_csv(root_path+"/../data/ASM/full_train.csv", sep="\t", index=False)
     print("\nCreated {0} data entries and saved file".format(len(data)))
 
     # create file for length of data
-    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/data_size.txt", "w") as f:
+    with open(root_path+"/../data/ASM/data_size.txt", "w") as f:
         f.write(str(len(data)))
     # create alphabet
     letters = set()
@@ -221,7 +225,7 @@ def preprocess_ASM_csv(print_letters=False):
             for l in list(tran):
                 letters.add(l)
     letters = "".join(sorted(letters))
-    with open(os.path.sep.join(__file__.split(os.path.sep)[:-1])+"/../data/ASM/alphabet.txt", "w") as f:
+    with open(root_path+"/../data/ASM/alphabet.txt", "w") as f:
         f.write(letters)
     print("\n")
     if print_letters:
