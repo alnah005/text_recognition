@@ -8,17 +8,21 @@ from PIL import Image
 import PIL
 import requests
 from io import BytesIO
+import time
 
+train_lines = []
+img_files = []
+count = 0
 
 def readImg(url, grey=True):
+    global count
+    if (count+1) % 5000 == 0:
+        time.sleep(600)
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
     img = img.convert("L")
     return img
 
-train_lines = []
-img_files = []
-count = 0
 # create a batch with the next group of data from ASM
 def create_ASM_batch(resize_to=0.5):
     global train_lines
@@ -26,26 +30,29 @@ def create_ASM_batch(resize_to=0.5):
     global count
     print(count)
     # Read in all classifications
-    sv_fold = "../data/ASM/"
+    sv_fold = os.path.sep.join(__file__.split(os.path.sep)[:-1])
+    if len(sv_fold) > 0:
+       sv_fold += "/../data/ASM/"
+    else:
+       sv_fold = "./../data/ASM/"
     if not os.path.isdir(sv_fold+"Images"):
         os.mkdir(sv_fold+"Images")
 
-    full_sv = os.getcwd().replace("\\", "/")
-    full_sv = full_sv.replace("/online_functions", "")
-    full_sv = full_sv.replace("/modeling", "")
-    full_sv = full_sv.replace("/results", "")
-    full_sv = full_sv.replace("/preprocess","")
-    full_sv = full_sv + "/data/ASM/Images/"
+    root_path = os.path.sep.join(__file__.split(os.path.sep)[:-1])
+    if len(root_path) > 0:
+        root_path += '/'
+    else:
+        root_path = './'
 
     print("Loading classification data", flush=True)
-    if os.path.exists("../data/ASM/full_train.csv"):
-        data = pd.read_csv("../data/ASM/full_train.csv", sep="\t")
+    if os.path.exists(root_path+"../data/ASM/full_train.csv"):
+        data = pd.read_csv(root_path+"../data/ASM/full_train.csv", sep="\t")
     else:
         print("File doesn't exist, run \"preprocess_ASM_csv.py\" first", flush=True)
 
     # Preprocess by splitting image into sections
     # load input_shape from file output by preprocess
-    with open("../data/img_size.txt", "r") as f:
+    with open(root_path+"../data/img_size.txt", "r") as f:
         doc = f.readline()
         w, h = doc.split(",")
         maxh = int(float(h))
@@ -58,8 +65,12 @@ def create_ASM_batch(resize_to=0.5):
     for i in range(count, len(data)):
         curclas = data.iloc[i].copy()
         loc = curclas["location"]
-        img = readImg(loc)
-
+        fn = "{0}{1}".format(root_path+ "../data/ASM/Original_Images/",loc.split('/')[-1])
+        try:
+            img = Image.open(fn)
+        except:
+            img = readImg(loc)
+            img.save(fn)
         trans = curclas["transcription"]
         # extract area in bounding box
         line_box = eval(curclas["line_box"])
@@ -92,7 +103,7 @@ def create_ASM_batch(resize_to=0.5):
             ratio = maxw / float(img_line.size[0])
             hnew = int(float(img_line.size[1]) * float(ratio))
             img_line = img_line.resize((maxw, hnew), PIL.Image.ANTIALIAS)
-        fn = "{0}{1}_{2}_{3}_{4}.png".format(full_sv, curclas["subject_id"], curclas["classification_id"],
+        fn = "{0}{1}_{2}_{3}_{4}.png".format(root_path+ "../data/ASM/Images/", curclas["subject_id"], curclas["classification_id"],
                                              curclas["frame"], curclas["j"])
         # save image
         img_line.save(fn)
@@ -111,14 +122,13 @@ def create_ASM_batch(resize_to=0.5):
     # end of loop
     savedata = pd.DataFrame.from_dict({"new_img_path":img_files, "transcription":train_lines})
     savedata = savedata[np.logical_not(savedata.duplicated())]
-    savedata.to_csv("../data/ASM/train.csv", sep="\t", index=False)
+    savedata.to_csv(root_path+ "../data/ASM/train.csv", sep="\t", index=False)
     print("\nTraining file and {0} images created".format(len(savedata)), flush=True)
     return
 
 
 if __name__ == "__main__":
     resize_to=1.0
-
     if len(sys.argv) >= 2:
         resize_to=float(sys.argv[1])
 
@@ -128,6 +138,8 @@ if __name__ == "__main__":
             create_ASM_batch(resize_to=resize_to)
             redo = False
         except:
+            count += 1
+            time.sleep(60)
             print("Error during batch creation, redoing", flush=True)
             redo = True
             
