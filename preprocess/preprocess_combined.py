@@ -24,7 +24,8 @@ def preprocess_combined(is_training=True, resize_to=0.5, print_letters=False):
         print("\nCreating combined train.csv")
         iam = pd.read_csv("../data/iamHandwriting/train.csv", sep="\t")
         benth = pd.read_csv("../data/BenthamDataset/train.csv", sep="\t")
-        full = pd.concat([iam, benth])
+        asm = pd.read_csv("../data/ASMSplit/train.csv", sep="\t")
+        full = pd.concat([iam, benth, asm])
         full.to_csv("../data/combined_train/train.csv", sep="\t", index=False)
     else:
         if not os.path.isdir("../data/combined_test/"):
@@ -34,7 +35,8 @@ def preprocess_combined(is_training=True, resize_to=0.5, print_letters=False):
         print("\nCreating combined train.csv")
         iam = pd.read_csv("../data/iamTest/train.csv", sep="\t")
         benth = pd.read_csv("../data/BenthamTest/train.csv", sep="\t")
-        full = pd.concat([iam, benth])
+        asm = pd.read_csv("../data/ASMSplit/val.csv", sep="\t")
+        full = pd.concat([iam, benth, asm])
         full.to_csv("../data/combined_test/train.csv", sep="\t", index=False)
 
 
