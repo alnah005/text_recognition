@@ -6,14 +6,15 @@ from preprocess_bentham import *
 from preprocess_iam import *
 
 
-
 # preprocess the combined iam and bentham training set
 def preprocess_combined(is_training=True, resize_to=0.5, print_letters=False):
     # run preprocessing scripts to get ensure data is in place
     print("\nRunning preprocessing on iam lines training")
-    preprocess_iam_lines(resize_to=resize_to, is_training=is_training, print_letters=print_letters)
+    preprocess_iam_lines(resize_to=resize_to,
+                         is_training=is_training, print_letters=print_letters)
     print("\nRunning preprocessing on Bentham training")
-    preprocess_bentham(resize_to=resize_to, is_training=is_training, print_letters=print_letters)
+    preprocess_bentham(resize_to=resize_to,
+                       is_training=is_training, print_letters=print_letters)
 
     if is_training:
         if not os.path.isdir("../data/combined_train/"):
@@ -39,12 +40,12 @@ def preprocess_combined(is_training=True, resize_to=0.5, print_letters=False):
 
 # preprocess all the combined data
 if __name__ == "__main__":
-    if len(sys.argv >= 3):
+    if len(sys.argv) >= 3:
         resize_to = float(sys.argv[2])
     else:
         resize_to = 0.5
 
-    if len(sys.argv >= 4):
+    if len(sys.argv) >= 4:
         print_letters = sys.argv[3] == "True"
     else:
         print_letters = False

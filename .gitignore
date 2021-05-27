@@ -14,3 +14,4 @@ old/*
 *.tar.bz2
 .Rhistory
 .ipynb_checkpoints/
+*.out
